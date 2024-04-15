@@ -24,7 +24,7 @@ net = create_net(in_features, hidden_units, non_linearity, out_size)
 
 # specify the training opts
 train_opts = {
-    "num_epochs": 20,
+    "num_epochs": 15,
     "lr": 0.5,
     "momentum": 0.9,
     "batch_size": 4,
@@ -33,6 +33,13 @@ train_opts = {
     "gamma": 1,
 }
 
-# train  and save the model
+# train and save the model with base options
 train(net, xor_dataset, train_opts)
 save(net, 'xor_solution.pt')
+
+
+# train and save the model for 30 epochs because
+# accuracy seems to reach 100% after 18 epochs
+train_opts["num_epochs"] = 30
+train(net, xor_dataset, train_opts)
+save(net, 'xor_solution_30epochs.pt')

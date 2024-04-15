@@ -1,0 +1,4 @@
+/.idea
+/__pycache__
+.DS_Store
+image_categorization_dataset.pt
