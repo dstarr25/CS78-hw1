@@ -28,5 +28,4 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
         features /= features.std(dim=0)
     # create tensor dataset train_ds
     train_ds = TensorDataset(features, labels)
-    print(features.shape, labels.shape)
     return train_ds

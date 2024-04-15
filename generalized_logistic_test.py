@@ -43,33 +43,29 @@ def generalized_logistic_test():
     is_correct = True
     err = {}
     # Forward pass test
-    y = generalized_logistic(X, L, U, G)
+    Y = generalized_logistic(X, L, U, G)
     y_true = torch.tanh(X)
-    err['y'] = torch.max(torch.abs(y - y_true)).item()
+    err['y'] = torch.max(torch.abs(Y - y_true)).item()
     is_correct &= err['y'] < TOL1
 
     # Backward pass test
-    y.mean().backward()
+    Z = Y.mean()
+    Z.backward()
     dzdx, dzdl, dzdu, dzdg = X.grad, L.grad.item(), U.grad.item(), G.grad.item()
 
     # Numerical gradients
     dzdx_num = torch.zeros_like(X)
-    dzdl_num = 0.0
-    dzdu_num = 0.0
-    dzdg_num = 0.0
 
     with torch.no_grad():
         for i in range(X.shape[0]):
             for j in range(X.shape[1]):
-                X_plus = X.clone()
-                X_plus[i, j] += DELTA
-                y_plus = generalized_logistic(X_plus, L, U, G)
-
-                X_minus = X.clone()
-                X_minus[i, j] -= DELTA
-                y_minus = generalized_logistic(X_minus, L, U, G)
-
-                dzdx_num[i, j] = (y_plus - y_minus).mean() / (2 * DELTA)
+                x_plus = X.clone()
+                x_plus[i, j] += DELTA
+                x_minus = X.clone()
+                x_minus[i, j] -= DELTA
+                fx_plus = generalized_logistic(x_plus, L, U, G)
+                fx_minus = generalized_logistic(x_minus, L, U, G)
+                dzdx_num[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
 
         dzdl_num = (generalized_logistic(X, L + DELTA, U, G) - generalized_logistic(X, L - DELTA, U, G)).mean() / (2 * DELTA)
         dzdu_num = (generalized_logistic(X, L, U + DELTA, G) - generalized_logistic(X, L, U - DELTA, G)).mean() / (2 * DELTA)

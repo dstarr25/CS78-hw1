@@ -28,16 +28,11 @@ def create_net(input_features, hidden_units, non_linearity, output_size):
     for i in range(len(hidden_units)):
         if i == 0:
             net.add_module(f"fc_0", FullyConnectedLayer(input_features, hidden_units[0]))
-            print(f"fc_0: {input_features} -> {hidden_units[0]}")
         else:
             net.add_module(f"{non_linearity[i - 1]}_{i}", GeneralizedLogisticLayer(non_linearity[i - 1]))
-            print(f"{non_linearity[i - 1]}_{i}")
             net.add_module(f"fc_{i}", FullyConnectedLayer(hidden_units[i - 1], hidden_units[i]))
-            print(f"fc_{i}: {hidden_units[i - 1]} -> {hidden_units[i]}")
     # add output layer
     net.add_module(f"{non_linearity[-1]}_{len(hidden_units)}", GeneralizedLogisticLayer(non_linearity[-1]))
-    print(f"{non_linearity[-1]}_{len(hidden_units)}")
     net.add_module("fc_output", FullyConnectedLayer(hidden_units[-1], output_size))
-    print(f"fc_output: {hidden_units[-1]} -> {output_size}")
 
     return net
