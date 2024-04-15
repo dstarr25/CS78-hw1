@@ -52,7 +52,7 @@ def generalized_logistic_test():
     Z = Y.mean()
     Z.backward()
     dzdx, dzdl, dzdu, dzdg = X.grad, L.grad.item(), U.grad.item(), G.grad.item()
-
+    dzdy = torch.autograd.grad(Z, Y, create_graph=True)[0]
     # Numerical gradients
     dzdx_num = torch.zeros_like(X)
 
@@ -65,11 +65,11 @@ def generalized_logistic_test():
                 x_minus[i, j] -= DELTA
                 fx_plus = generalized_logistic(x_plus, L, U, G)
                 fx_minus = generalized_logistic(x_minus, L, U, G)
-                dzdx_num[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+                dzdx_num[i, j] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
 
-        dzdl_num = (generalized_logistic(X, L + DELTA, U, G) - generalized_logistic(X, L - DELTA, U, G)).mean() / (2 * DELTA)
-        dzdu_num = (generalized_logistic(X, L, U + DELTA, G) - generalized_logistic(X, L, U - DELTA, G)).mean() / (2 * DELTA)
-        dzdg_num = (generalized_logistic(X, L, U, G + DELTA) - generalized_logistic(X, L, U, G - DELTA)).mean() / (2 * DELTA)
+        dzdl_num = torch.sum(dzdy * (generalized_logistic(X, L + DELTA, U, G) - generalized_logistic(X, L - DELTA, U, G)).mean() / (2 * DELTA))
+        dzdu_num = torch.sum(dzdy * (generalized_logistic(X, L, U + DELTA, G) - generalized_logistic(X, L, U - DELTA, G)).mean() / (2 * DELTA))
+        dzdg_num = torch.sum(dzdy * (generalized_logistic(X, L, U, G + DELTA) - generalized_logistic(X, L, U, G - DELTA)).mean() / (2 * DELTA))
 
     err['dzdx'] = torch.max(torch.abs(dzdx - dzdx_num)).item()
     err['dzdl'] = abs(dzdl - dzdl_num).item()

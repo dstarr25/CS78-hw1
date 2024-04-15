@@ -39,6 +39,8 @@ def mean_squared_error_test():
     Y = mean_squared_error(X1, X2)
     Z = Y.mean()
     Z.backward()
+
+    dzdy = torch.autograd.grad(Z, Y, create_graph=True)[0]
     dzdx1_analytical = X1.grad
     dzdx2_analytical = X2.grad
     dzdx1_numerical = torch.zeros_like(X1)
@@ -53,7 +55,7 @@ def mean_squared_error_test():
                 x1_minus[i, j] -= DELTA
                 fx_plus = mean_squared_error(x1_plus, X2)
                 fx_minus = mean_squared_error(x1_minus, X2)
-                dzdx1_numerical[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+                dzdx1_numerical[i, j] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
         
         for i in range(X2.size(0)):
             for j in range(X2.size(1)):
@@ -63,7 +65,7 @@ def mean_squared_error_test():
                 x2_minus[i, j] -= DELTA
                 fx_plus = mean_squared_error(X1, x2_plus)
                 fx_minus = mean_squared_error(X1, x2_minus)
-                dzdx2_numerical[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+                dzdx2_numerical[i, j] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
     
     err_dzdx1 = torch.max(torch.abs(dzdx1_analytical - dzdx1_numerical))
     err_dzdx2 = torch.max(torch.abs(dzdx2_analytical - dzdx2_numerical))

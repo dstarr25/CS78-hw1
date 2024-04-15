@@ -40,6 +40,6 @@ save(net, 'xor_solution.pt')
 
 # train and save the model for 30 epochs because
 # accuracy seems to reach 100% after 18 epochs
-train_opts["num_epochs"] = 30
+train_opts["num_epochs"] = 20
 train(net, xor_dataset, train_opts)
 save(net, 'xor_solution_30epochs.pt')

@@ -44,6 +44,8 @@ def fully_connected_test():
     Z = Y.mean()
     Z.backward()
 
+    dzdy = torch.autograd.grad(Z, Y, create_graph=True)[0]
+
     dzdx_analytical = X.grad
     dzdw_analytical = W.grad
     dzdb_analytical = B.grad
@@ -61,7 +63,7 @@ def fully_connected_test():
                 x_minus[i, j] -= DELTA
                 fx_plus = full_connected(x_plus, W, B)
                 fx_minus = full_connected(x_minus, W, B)
-                dzdx_num[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+                dzdx_num[i, j] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
         for i in range(W.size(0)):
             for j in range(W.size(1)):
                 w_plus = W.clone()
@@ -70,7 +72,7 @@ def fully_connected_test():
                 w_minus[i, j] -= DELTA
                 fx_plus = full_connected(X, w_plus, B)
                 fx_minus = full_connected(X, w_minus, B)
-                dzdw_num[i, j] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+                dzdw_num[i, j] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
         for i in range(B.size(0)):
             b_plus = B.clone()
             b_plus[i] += DELTA
@@ -78,7 +80,7 @@ def fully_connected_test():
             b_minus[i] -= DELTA
             fx_plus = full_connected(X, W, b_plus)
             fx_minus = full_connected(X, W, b_minus)
-            dzdb_num[i] = (fx_plus - fx_minus).mean() / (2 * DELTA)
+            dzdb_num[i] = torch.sum(dzdy * (fx_plus - fx_minus).mean() / (2 * DELTA))
 
     err_dzdx = torch.max(torch.abs(dzdx_analytical - dzdx_num))
     err_dzdw = torch.max(torch.abs(dzdw_analytical - dzdw_num))
