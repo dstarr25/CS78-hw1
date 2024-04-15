@@ -17,11 +17,16 @@ def load_dataset(dataset_path, mean_subtraction, normalization):
     train_ds (TensorDataset): The features and their corresponding labels bundled as a dataset
     """
     # Load the dataset and extract the features and the labels
-
+    dataset = torch.load(dataset_path)
+    features = dataset["features"]
+    labels = dataset["labels"]
     # Do mean_subtraction if it is enabled
-
+    if mean_subtraction:
+        features -= features.mean(dim=0)
     # do normalization if it is enabled
-
+    if normalization:
+        features /= features.std(dim=0)
     # create tensor dataset train_ds
-
+    train_ds = TensorDataset(features, labels)
+    print(features.shape, labels.shape)
     return train_ds

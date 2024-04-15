@@ -38,13 +38,59 @@ def generalized_logistic_test():
     TOL2 = dataset["TOL2"]
     DELTA = dataset["DELTA"]
     generalized_logistic = GeneralizedLogistic.apply
-    # %%%  DO NOT EDIT ABOVE %%%
+    # %%% DO NOT EDIT ABOVE %%%
 
+    is_correct = True
+    err = {}
+    # Forward pass test
+    y = generalized_logistic(X, L, U, G)
+    y_true = torch.tanh(X)
+    err['y'] = torch.max(torch.abs(y - y_true)).item()
+    is_correct &= err['y'] < TOL1
+
+    # Backward pass test
+    y.mean().backward()
+    dzdx, dzdl, dzdu, dzdg = X.grad, L.grad.item(), U.grad.item(), G.grad.item()
+
+    # Numerical gradients
+    dzdx_num = torch.zeros_like(X)
+    dzdl_num = 0.0
+    dzdu_num = 0.0
+    dzdg_num = 0.0
+
+    with torch.no_grad():
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                X_plus = X.clone()
+                X_plus[i, j] += DELTA
+                y_plus = generalized_logistic(X_plus, L, U, G)
+
+                X_minus = X.clone()
+                X_minus[i, j] -= DELTA
+                y_minus = generalized_logistic(X_minus, L, U, G)
+
+                dzdx_num[i, j] = (y_plus - y_minus).mean() / (2 * DELTA)
+
+        dzdl_num = (generalized_logistic(X, L + DELTA, U, G) - generalized_logistic(X, L - DELTA, U, G)).mean() / (2 * DELTA)
+        dzdu_num = (generalized_logistic(X, L, U + DELTA, G) - generalized_logistic(X, L, U - DELTA, G)).mean() / (2 * DELTA)
+        dzdg_num = (generalized_logistic(X, L, U, G + DELTA) - generalized_logistic(X, L, U, G - DELTA)).mean() / (2 * DELTA)
+
+    err['dzdx'] = torch.max(torch.abs(dzdx - dzdx_num)).item()
+    err['dzdl'] = abs(dzdl - dzdl_num).item()
+    err['dzdu'] = abs(dzdu - dzdu_num).item()
+    err['dzdg'] = abs(dzdg - dzdg_num).item()
+
+    is_correct &= err['dzdx'] < TOL2
+    is_correct &= err['dzdl'] < TOL2
+    is_correct &= err['dzdu'] < TOL2
+    is_correct &= err['dzdg'] < TOL2
+    is_correct &= torch.autograd.gradcheck(GeneralizedLogistic.apply, (X, L, U, G), eps=DELTA, atol=TOL2)
+
+    torch.save([is_correct, err], "generalized_logistic_test_results.pt")
 
     return is_correct, err
 
-
 if __name__ == '__main__':
     test_passed, errors = generalized_logistic_test()
-    assert test_passed
     print(errors)
+    assert test_passed
